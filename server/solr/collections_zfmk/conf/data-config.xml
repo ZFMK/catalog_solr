@@ -1,0 +1,147 @@
+<dataConfig>
+
+<dataSource type="JdbcDataSource"
+	driver="com.mysql.cj.jdbc.Driver"
+	url="jdbc:mysql://@@MYSQL_HOST@@:@@MYSQL_PORT@@/@@MYSQL_DATABASE@@"
+	user="@@MYSQL_USER@@"
+	password="@@MYSQL_PASSWORD@@"
+	serverTimezone="UTC"
+	batchSize="5000"
+	readOnly="true"/>
+
+<document name="content">
+	<entity name="occurence"
+		query="SELECT s.id,
+			CONCAT(TRUNCATE(REPLACE(g.lat, ',', '.'), 4),
+				',',
+				TRUNCATE(REPLACE(g.lon, ',', '.'), 4)) AS geo_point,
+			s.taxon_id,
+			s.withhold_flagg,
+			t.parent_id,
+			p1.taxon AS parenttaxon,
+			t.taxon AS taxon,
+			tf.tax_species,
+			tf.tax_kingdom,
+			tf.tax_phylum,
+			tf.tax_subphylum,
+			tf.tax_class,
+			tf.tax_order,
+			tf.tax_family,
+			tf.tax_subfamily,
+			tf.tax_genus,
+			t.`rank`,
+			t.known,
+			t.collected,
+			t.barcode,
+			t.collected_individuals,
+			t.barcode_individuals,
+			COALESCE(gi.institute_short,'ZFMK') AS institute,
+			COALESCE(sc.`name`, '') AS vernacular,
+			GROUP_CONCAT(DISTINCT COALESCE(TRIM(sy.taxon), '') SEPARATOR ';') AS synonyms,
+			COALESCE(rs.`value`, '') AS redlist_status,
+			COALESCE(rp.`value`, '') AS redlist_current_population,
+			IF(s.barcode > 0, 1, 0) AS barcode_count,
+			GROUP_CONCAT(DISTINCT m.media_type ORDER BY m.media_type SEPARATOR ';') as media_types,
+			GROUP_CONCAT(DISTINCT p.id ORDER BY p.id SEPARATOR ';') AS project_ids,
+			compl.grouped_percent AS completeness_level
+		FROM ZFMK_Coll_Specimen s
+			LEFT JOIN ZFMK_Coll_Geo g ON g.specimen_id = s.id
+			LEFT JOIN ZFMK_Coll_Taxa t ON t.id = s.taxon_id
+			LEFT JOIN ZFMK_Coll_Taxa p1 ON p1.id = t.parent_id
+			LEFT JOIN ZFMK_Coll_TaxaFlat tf ON tf.taxon_id = s.taxon_id
+			LEFT JOIN ZFMK_Coll_TaxaRedLists rs ON (rs.taxon_id=s.taxon_id AND rs.category_id = 33)
+			LEFT JOIN ZFMK_Coll_TaxaRedLists rp ON (rp.taxon_id=rs.taxon_id AND rp.category_id = 27)
+			LEFT JOIN ZFMK_Coll_Institutes gi ON gi.institute_id=s.institute_id
+			LEFT JOIN ZFMK_Coll_TaxaCommonNames sc ON (s.taxon_id=sc.taxon_id AND sc.code='de')
+			LEFT JOIN ZFMK_Coll_TaxaSynonyms sy ON sy.syn_taxon_id=s.taxon_id
+			LEFT JOIN ZFMK_Coll_Media m ON (m.specimen_id = s.id AND m.`media_type` = 'image')
+			INNER JOIN ZFMK_Coll_CollectionProject cp ON (cp.specimen_id = s.id)
+			INNER JOIN ZFMK_Coll_Project p ON (p.ProjectID = cp.ProjectID AND p.DatasourceID = cp.DatasourceID)
+			LEFT JOIN ZFMK_Coll_SpecimenCompleteness compl ON(compl.specimen_id = s.id)
+		GROUP BY s.id,
+		s.withhold_flagg,
+		g.lat,
+		g.lon,
+		s.taxon_id,
+		t.parent_id,
+		p1.taxon,
+		t.taxon,
+		tf.tax_species,
+		tf.tax_kingdom,
+		tf.tax_phylum,
+		tf.tax_subphylum,
+		tf.tax_class,
+		tf.tax_order,
+		tf.tax_family,
+		tf.tax_subfamily,
+		tf.tax_genus,
+		t.`rank`,
+		t.known,
+		t.collected,
+		t.barcode,
+		t.collected_individuals,
+		t.barcode_individuals,
+		gi.institute_short,
+		sc.`name`,
+		rs.`value`,
+		rp.`value`,
+		s.`barcode`,
+		m.`license`,
+		compl.grouped_percent
+		">
+
+		<entity name="data"
+			query="SELECT
+				max(Case when f.id= 1 then COALESCE(a.field_value, '') else '' end) As AccessionNumber_1_data_string
+				, max(Case when f.id= 2 then COALESCE(a.field_value, '') else '' end) As Changed_5_data_tdate
+				, max(Case when f.id= 3 then COALESCE(a.field_value, '') else '' end) As CollectingMethod_7_data_string
+				, max(Case when f.id= 4 then COALESCE(a.field_value, '') else '' end) As CollectingDate_5_data_string
+				, max(Case when f.id= 5 then COALESCE(a.field_value, '') else '' end) As CollectingNotes_8_data_text_ws
+				, max(Case when f.id= 6 then COALESCE(a.field_value, '') else '' end) As CollectorsName_2_data_string
+				, max(Case when f.id= 7 then COALESCE(a.field_value, '') else '' end) As Country_4_data_string
+				, max(Case when f.id= 8 then COALESCE(a.field_value, '') else '' end) As DepositorsAccessionNumber_1_data_string
+				, max(Case when f.id= 9 then COALESCE(a.field_value, '') else '' end) As DepositorsName_2_data_string
+				, max(Case when f.id=10 then COALESCE(a.field_value, '') else '' end) As FieldNumber_1_data_string
+				, max(Case when f.id=11 then COALESCE(a.field_value, '') else '' end) As HabitatDescription_6_data_text_ws
+				, max(Case when f.id=12 then COALESCE(a.field_value, '') else '' end) As LifeStage_3_data_string
+				, max(Case when f.id=13 then COALESCE(a.field_value, '') else '' end) As LocalityDescription_4_data_text_ws
+				, max(Case when f.id=14 then COALESCE(a.field_value, '') else '' end) As Location_4_data_string
+				, max(Case when f.id=15 then COALESCE(a.field_value, 0)  else '' end) As NumberOfUnits_9_data_int
+				, max(Case when f.id=16 then COALESCE(a.field_value, '') else '' end) As PreparationMethod_7_data_text_ws
+				, max(Case when f.id=17 then COALESCE(a.field_value, '') else '' end) As Sex_3_data_string
+				, max(Case when f.id=18 then COALESCE(a.field_value, '') else '' end) As CollectorsNumber_1_data_string
+				, max(Case when f.id=23 then COALESCE(a.field_value, '') else '' end) As Collection_13_data_string
+				, max(Case when f.id=26 then COALESCE(a.field_value, '') else '' end) As State_4_data_string
+				, max(Case when f.id=96 then COALESCE(a.field_value, '') else '' end) As typestatus_17_data_string
+				/*
+				CONCAT(COALESCE(f1.field_name,f.id),'_',REPLACE(c.id,'DE',''),'_data_',COALESCE(f1.solr_type,'string')) AS field_name
+				, COALESCE(a.field_value, IF(f1.solr_type='int',0,'')) AS field_value
+				*/
+			FROM ZFMK_Coll_Data_Fields f
+				INNER JOIN ZFMK_Coll_Data_Fields f1 ON (f1.id = f.id AND f1.lang='prg')
+				LEFT JOIN ZFMK_Coll_Data_Category c ON c.id=f.category
+				LEFT JOIN (
+					SELECT f.id AS field_id
+						, IF(field_id=2,DATE_FORMAT(d.term,'%Y-%m-%dT%H:%i:%sZ'),d.term) AS field_value
+					FROM ZFMK_Coll_Data_Fields f
+						LEFT JOIN ZFMK_Coll_Data d ON (f.id = d.field_id AND f.lang='de')
+						INNER JOIN ZFMK_Coll_Data2Specimen ds ON d.id = ds.data_id
+					WHERE ds.specimen_id = '${occurence.id}'
+				) AS a ON a.field_id=f.id
+			WHERE f.restricted=0 AND (f.id BETWEEN 1 AND 29 OR f.id = 96) AND f.id!=22 AND f.lang='de'">
+		</entity>
+		
+		<entity name="taxa"
+			onError="continue"
+			query="SELECT
+			COALESCE(sc.`name`, '') AS vernacular,
+			TRIM(sy.taxon) AS synonyms
+			FROM ZFMK_Coll_Specimen s
+			LEFT JOIN ZFMK_Coll_TaxaCommonNames sc ON (s.taxon_id=sc.taxon_id AND sc.code='de')
+			LEFT JOIN ZFMK_Coll_TaxaSynonyms sy ON (sy.syn_taxon_id=s.taxon_id)
+			WHERE s.id = '${occurence.id}'">
+		</entity>
+		
+	</entity>
+</document>
+</dataConfig>

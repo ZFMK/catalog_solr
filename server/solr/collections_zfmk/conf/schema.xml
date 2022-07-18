@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<schema name="collections_zfmk" version="1.5">
+<types>
+	<fieldType name="int" class="solr.IntPointField"  docValues="true"/>
+	<fieldType name="tdate" class="solr.DatePointField" omitNorms="true"/>
+	<fieldType name="long" class="solr.LongPointField"/>
+	<fieldType name="tdouble" class="solr.DoublePointField"/>
+	<fieldType name="location" class="solr.LatLonPointSpatialField"/>
+	<fieldType name="boolean" class="solr.BoolField"/>
+
+	<fieldType name="string" class="solr.TextField" >
+		<analyzer>
+			<tokenizer class="solr.StandardTokenizerFactory"/>
+			<filter class="solr.LowerCaseFilterFactory"/>
+		</analyzer>
+	</fieldType>
+
+	<fieldType name="text_general" class="solr.TextField" positionIncrementGap="100">
+		<analyzer>
+			<tokenizer class="solr.StandardTokenizerFactory"/>
+			<filter class="solr.LowerCaseFilterFactory"/>
+		</analyzer>
+	</fieldType>
+
+	<!-- A text field that only splits on whitespace for exact matching of words -->
+	<fieldType name="text_ws" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="true">
+		<analyzer type="index">
+			<tokenizer class="solr.WhitespaceTokenizerFactory"/>
+			<filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="1" catenateNumbers="1" catenateAll="0" splitOnCaseChange="1"/>
+			<filter class="solr.LowerCaseFilterFactory"/>
+			<filter class="solr.PorterStemFilterFactory"/>
+		</analyzer>
+		<analyzer type="query">
+			<tokenizer class="solr.WhitespaceTokenizerFactory"/>
+			<filter class="solr.LowerCaseFilterFactory"/>
+		</analyzer>
+		<analyzer type="select">
+			<tokenizer class="solr.WhitespaceTokenizerFactory"/>
+			<filter class="solr.LowerCaseFilterFactory"/>
+		</analyzer>
+	</fieldType>
+
+	<!-- Don't even tokenize (for certain kinds of faceting, e.g. institute_facet) -->
+	<fieldType name="text_noTokens" class="solr.TextField" positionIncrementGap="20">
+		<analyzer>
+			<tokenizer class="solr.KeywordTokenizerFactory" />
+		</analyzer>
+	</fieldType>
+
+	<!-- Split on semicols, for faceting on the "Author" or "Synonyms" field -->
+	<fieldType name="text_commaDelimited" class="solr.TextField" positionIncrementGap="20">
+		<analyzer>
+			<tokenizer class="solr.PatternTokenizerFactory" pattern=";\s*" />
+			<filter class="solr.LowerCaseFilterFactory"/>
+		</analyzer>
+	</fieldType>
+</types>
+
+<fields>
+	<field name="_version_" type="long" indexed="true" stored="true"/>
+	<field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+
+	<!-- withhold flagg -->
+	<field name="withhold_flagg" type="boolean" indexed="true" stored="true" required="true" multiValued="false" />
+	
+	<!-- project_ids for access control -->
+	<field name="project_ids" type="text_commaDelimited" indexed="true" stored="true" multiValued="true" />
+	
+
+	<!-- statistics -->
+	<field name="known" type="int" indexed="true" stored="true" multiValued="false"/>
+	<field name="collected" type="int" indexed="true" stored="true" multiValued="false"/>
+	<field name="barcode" type="int" indexed="true" stored="true" multiValued="false"/>
+	<field name="collected_individuals" type="int" indexed="true" stored="true" multiValued="false"/>
+	<field name="barcode_individuals" type="int" indexed="true" stored="true" multiValued="false"/>
+	<field name="barcode_count" type="int" indexed="true" stored="true"/>
+
+	<field name="colldate" type="string" indexed="true" stored="true" multiValued="false"/>
+
+	<!-- Geo Data -->
+	<field name="geo_point" type="location" indexed="true" stored="true"  />
+	<dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="false" />
+
+	<!-- Data categories -->
+	<dynamicField name="*_data_int" type="int" indexed="false" stored="false" multiValued="false"/>
+	<copyField source="*_data_int" dest="*"/>
+
+	<dynamicField name="*_data_string" type="string" indexed="false" stored="false" multiValued="false"/>
+	<copyField source="*_data_string" dest="*"/>
+
+	<dynamicField name="*_data_tdate" type="tdate" indexed="false" stored="false" multiValued="false"/>
+	<copyField source="*_data_tdate" dest="*"/>
+
+	<dynamicField name="*_data_text_ws" type="text_ws" indexed="false" stored="false" multiValued="false"/>
+	<copyField source="*_data_text_ws" dest="*"/>
+
+	<dynamicField name="*_data_text_noTokens" type="text_noTokens" indexed="false" stored="false" multiValued="false"/>
+	<copyField source="*_data_text_noTokens" dest="*"/>
+
+	<!-- Taxa -->
+	<field name="taxon_id" type="int" indexed="true" stored="true" multiValued="false" />
+	<field name="parent_id" type="int" indexed="true" stored="true" multiValued="false" />
+
+	<field name="rank" type="string" indexed="true" stored="true" multiValued="false"/>
+	<field name="synonyms" type="text_commaDelimited" indexed="true" stored="true" multiValued="true"/>
+	<field name="vernacular" type="string" indexed="true" stored="true"/>
+	<field name="tax_species" type="string" indexed="true" stored="true" multiValued="false" sortMissingLast="true"/>
+	<field name="tax_genus" type="string" indexed="true" stored="true" multiValued="false" sortMissingLast="true"/>
+	<field name="tax_fam" type="string" indexed="true" stored="true" multiValued="false"/>
+	<field name="tax_subfam" type="string" indexed="true" stored="true" multiValued="false"/>
+	<field name="tax_order" type="string" indexed="false" stored="false" multiValued="false"/>
+	<field name="tax_class" type="string" indexed="false" stored="false" multiValued="false"/>
+	<field name="tax_subphylum" type="string" indexed="false" stored="false" multiValued="false"/>
+	<field name="tax_phylum" type="string" indexed="false" stored="false" multiValued="false"/>
+	<field name="tax_kingdom" type="string" indexed="true" stored="false" multiValued="false"/>
+
+	<!-- Fields for facetting -->
+	<copyField source="institute" dest="institute_facet"/>
+	<field name="institute" type="string" indexed="true" stored="true"/>
+	<field name="institute_facet" type="text_noTokens" indexed="true" stored="true"/>
+	<copyField source="State_4_data_string" dest="state"/>
+	<copyField source="State_4_data_string" dest="state_facet"/>
+	<field name="state" type="text_noTokens" indexed="true" stored="true" sortMissingLast="true"/>
+	<field name="state_facet" type="text_noTokens" indexed="true" stored="true"/>
+	<copyField source="DepositorsName_2_data_string" dest="depositors_name_facet"/>
+	<field name="depositors_name_facet" type="text_noTokens" indexed="true" stored="true"/>
+	<field name="redlist_status" type="text_noTokens" indexed="true" stored="true"/>
+	<field name="redlist_current_population" type="text_noTokens" indexed="true" stored="true"/>
+	
+	<copyField source="Country_4_data_string" dest="country"/>
+	<copyField source="Country_4_data_string" dest="country_facet"/>
+	<field name="country" type="text_noTokens" indexed="true" stored="true" sortMissingLast="true"/>
+	<field name="country_facet" type="text_noTokens" indexed="true" stored="true"/>
+	
+	<copyField source="Collection_13_data_string" dest="collection"/>
+	<copyField source="Collection_13_data_string" dest="collection_facet"/>
+	<field name="collection" type="string" indexed="true" stored="true"/>
+	<field name="collection_facet" type="text_noTokens" indexed="true" stored="true"/>
+	
+	<copyField source="typestatus_17_data_string" dest="typestatus"/>
+	<copyField source="typestatus_17_data_string" dest="typestatus_facet"/>
+	<field name="typestatus" type="string" indexed="true" stored="true"/>
+	<field name="typestatus_facet" type="string" indexed="true" stored="true"/>
+	
+	<field name="media_types" type="text_commaDelimited" indexed="true" stored="true" multiValued="true"/>
+
+	<copyField source="tax_subfam" dest="tax_family"/>
+	<copyField source="tax_fam" dest="tax_family"/>
+	<field name="tax_family" type="string" indexed="true" stored="false" multiValued="true"/>
+	<copyField source="tax_order" dest="tax_class_order"/>
+	<copyField source="tax_class" dest="tax_class_order"/>
+	<field name="tax_class_order" type="string" indexed="true" stored="false" multiValued="true"/>
+	<copyField source="tax_subphylum" dest="tax_phyl_subphyl"/>
+	<copyField source="tax_phylum" dest="tax_phyl_subphyl"/>
+	<field name="tax_phyl_subphyl" type="string" indexed="true" stored="false" multiValued="true"/>
+	
+	<field name="completeness_level" type="int" indexed="true" stored="true" multiValued="false"/>
+
+	<!-- Fields for full text search -->
+	<!-- kingdom is obmitted -->
+	<copyField source="tax_species" dest="all_taxa"/>
+	<copyField source="tax_genus" dest="all_taxa"/>
+	<copyField source="tax_family" dest="all_taxa"/>
+	<copyField source="tax_order" dest="all_taxa"/>
+	<copyField source="tax_class" dest="all_taxa"/>
+	<copyField source="tax_subphylum" dest="all_taxa"/>
+	<copyField source="tax_phylum" dest="all_taxa"/>
+	<copyField source="synonyms" dest="all_taxa"/>
+	<copyField source="vernacular" dest="all_taxa"/>
+	<field name="all_taxa" type="string" indexed="true" stored="true" multiValued="true"/>
+	
+
+	<!-- Catalogue numbers -->
+	<copyField source="*_1_data_string" dest="category_1"/>
+	<field name="category_1" type="text_noTokens" indexed="true" stored="false" multiValued="true"/>
+	<!-- Names -->
+	<copyField source="*_2_data_string" dest="category_2"/>
+	<field name="category_2" type="text_commaDelimited" indexed="true" stored="false" multiValued="true"/>
+	<!-- Biology -->
+	<copyField source="*_3_data_string" dest="category_3"/>
+	<field name="category_3" type="string" indexed="true" stored="false" multiValued="true"/>
+	<!-- Locations -->
+	<copyField source="*_4_data_string" dest="category_4"/>
+	<copyField source="*_4_data_text_ws" dest="category_4"/>
+	<field name="category_4" type="string" indexed="true" stored="true" multiValued="true"/>
+	<!-- Dates -->
+	<copyField source="*_5_data_string" dest="category_5"/>
+	<field name="category_5" type="string" indexed="true" stored="false" multiValued="true"/>
+	<!-- Habitat -->
+	<copyField source="*_6_data_text_ws" dest="category_6"/>
+	<field name="category_6" type="text_ws" indexed="true" stored="false" multiValued="true"/>
+	<!-- Method -->
+	<copyField source="*_7_data_string" dest="category_7"/>
+	<copyField source="*_7_data_text_ws" dest="category_7"/>
+	<field name="category_7" type="text_ws" indexed="true" stored="false" multiValued="true"/>
+	<!-- Notes -->
+	<copyField source="*_8" dest="category_8"/>
+	<field name="category_8" type="text_ws" indexed="true" stored="false" multiValued="true"/>
+	<!-- Counting numbers -->
+	<copyField source="*_9_data_int" dest="category_9"/>
+	<field name="category_9" type="int" indexed="true" stored="false" multiValued="true"/>
+	<!-- Gene-Sequence -->
+	<copyField source="*_12_data_string" dest="category_12"/>
+	<field name="category_12" type="string" indexed="true" stored="false" multiValued="true"/>
+
+	<dynamicField name="*" type="text_noTokens" indexed="false" stored="true" multiValued="true"/>
+	
+	
+	<!-- Fields for sorting the results in the results table that are not available via other fieldnames here -->
+	<!-- Cataloque number -->
+	<copyField source="AccessionNumber_1_data_string" dest="accessionnumber"/>
+	<field name="accessionnumber" type="text_noTokens" indexed="true" stored="true" multiValued="false"/>
+	
+	<copyField source="parenttaxon" dest="parenttaxonname"/>
+	<field name="parenttaxonname" type="text_noTokens" indexed="true" stored="true" multiValued="false" sortMissingLast="true"/>
+	
+</fields>
+
+<!-- defaults -->
+	<uniqueKey>id</uniqueKey>
+</schema>
